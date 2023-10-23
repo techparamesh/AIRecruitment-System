@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Coding Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            background-color: #007bff;
+            color: #fff;
+            text-align: center;
+            padding: 20px 0;
+            margin: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+        button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #question-container {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        #answer {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+        #timer {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div id="timer">Time Left: 30:00</div>
+    <h1>Doodle Coding Challenge </h1>
+    <div class="container">
+        <div id="welcome">
+            <h1>Welcome to Our Coding Challenge!</h1>
+            <p>Congratulations! You've been selected for this role.</p>
+            <p>Please review and accept the Terms and Conditions below:</p>
+            <textarea id="terms" rows="10" cols="50" readonly>
+                Terms and Conditions:
+                - You agree to participate in the coding challenge.
+                - You understand that your performance will be evaluated.
+                - Thanks
+            </textarea>
+            <br>
+            <button onclick="acceptTerms()">Accept</button>
+        </div>
+
+    <div class="container">
+        <button id="start-button" onclick="startQuiz()">Start Quiz</button>
+        <div id="question-container"></div>
+        <textarea id="answer" placeholder="Your Answer" rows="4" cols="50" disabled></textarea>
+        <button id="submit-button" onclick="checkAnswer()" disabled>Submit Answer</button>
+        <div id="error-message" class="error"></div>
+    </div>
+
+    <script>
+        // JavaScript for the timer
+// JavaScript for the timer
+function startTimer() {
+       let timeLeft = 30 * 60; // 30 minutes in seconds
+
+       function updateTimer() {
+           const minutes = Math.floor(timeLeft / 60);
+           const seconds = timeLeft % 60;
+
+           const timerElement = document.getElementById('timer');
+           timerElement.textContent = `Time Left: ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+           if (timeLeft === 0) {
+               clearInterval(timerInterval); // Stop the timer when it reaches 0
+           } else {
+               timeLeft--;
+
+               // Display a warning at 5, 10, 15, and 20 minutes
+               if (timeLeft % (5 * 60) === 0) {
+                   const warningMinutes = timeLeft / 60;
+                   alert(`Warning: ${warningMinutes} minutes remaining!`);
+               }
+           }
+       }
+
+       // Call the updateTimer function every second
+       const timerInterval = setInterval(updateTimer, 1000);
+   }
+
+
+        let questionContainer = document.getElementById('question-container');
+        let answerInput = document.getElementById('answer');
+        let startButton = document.getElementById('start-button');
+        let submitButton = document.getElementById('submit-button');
+        let errorMessage = document.getElementById('error-message');
+
+        function startQuiz() {
+            fetch('/start_quiz', { method: 'POST' })
+                .then(response => response.text())
+                .then(data => {
+                    alert(data);
+                    getQuestion();
+                    startTimer();
+                    startButton.disabled = true;
+                    answerInput.disabled = false;
+                    submitButton.disabled = false;
+                });
+        }
+            // Start the timer when the page loads
+            //startTimer();
+        function getQuestion() {
+    fetch('/get_question', { method: 'GET' })
+        .then(response => response.text())
+        .then(data => {
+            if (!data.includes('Time is up')) {
+                questionContainer.innerText = data;
+                answerInput.value = '';
+                errorMessage.innerText = '';
+            } else {
+                questionContainer.innerText = 'Time is up! Quiz ended.';
+                answerInput.disabled = true;
+                submitButton.disabled = true;
+            }
+        });
+}
+
+
+        function checkAnswer() {
+            let answer = answerInput.value;
+            fetch('/check_answer', {
+                method: 'POST',
+                body: new URLSearchParams({ 'answer': answer }),
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            })
+                .then(response => response.text())
+                .then(data => {
+                    alert(data);
+                    if (data.includes('Next question')) {
+                        getQuestion();
+                    } else if (data.includes('Time is up')) {
+                        errorMessage.innerText = 'Time is up! Quiz ended.';
+                        answerInput.disabled = true;
+                        submitButton.disabled = true;
+                    } else {
+                        errorMessage.innerText = 'Incorrect answer. Please try again.';
+                    }
+                });
+        }
+        function acceptTerms() {
+            // Hide the welcome section and show the quiz or coding round section
+        document.getElementById('welcome').style.display = 'none';
+        // Redirect to the route that handles acceptance of terms
+        fetch('/accept_terms', { method: 'POST' })
+            .then(response => response.text())
+            .then(data => {
+                alert(data);
+                // You can choose to navigate to the coding round here
+                 fetch('/start_quiz', {method: 'GET'})
+            });
+        }
+    </script>
+</body>
+</html>

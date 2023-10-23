@@ -1,0 +1,7 @@
+# Ignore compiled Python files
+__pycache__/
+__pycache__
+stackoverflow_cache.sqlite
+
+# Ignore virtual environment directories
+venv/
